@@ -1,4 +1,4 @@
-import SetPixel
+from Primitivas.SetPixel import setPixel
 
 def reta_ingenua(superficie, x0, y0, x1, y1, cor):
     # Garantir x crescente
@@ -17,4 +17,4 @@ def reta_ingenua(superficie, x0, y0, x1, y1, cor):
 
     for x in range(x0, x1 + 1):
         y = m * x + b
-        SetPixel.setPixel(superficie, x, round(y), cor)
+        setPixel(superficie, x, round(y), cor)

@@ -1,5 +1,5 @@
 import math
-import SetPixel
+from Primitivas.SetPixel import setPixel
 
 def desenhar_seno(superficie, largura, altura, cor,):
     amplitude = altura // 4
@@ -9,4 +9,4 @@ def desenhar_seno(superficie, largura, altura, cor,):
     for x in range(largura):
         y = centro_y - int(math.sin(x*frequencia)*amplitude)
         
-        SetPixel.setPixel(superficie, x, y, (0, 0, 0))
+        setPixel(superficie, x, y, (0, 0, 0))

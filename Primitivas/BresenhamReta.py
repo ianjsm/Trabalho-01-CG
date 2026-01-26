@@ -1,4 +1,4 @@
-import SetPixel
+from Primitivas.SetPixel import setPixel
 
 def bresenham(superficie, x0, y0, x1, y1, cor):
     # Flags para transformações
@@ -29,9 +29,9 @@ def bresenham(superficie, x0, y0, x1, y1, cor):
 
     while x <= x1:
         if steep:
-            SetPixel.setPixel(superficie, y, x, cor)
+            setPixel(superficie, y, x, cor)
         else:
-            SetPixel.setPixel(superficie, x, y, cor)
+            setPixel(superficie, x, y, cor)
 
         if d <= 0:
             d += incE

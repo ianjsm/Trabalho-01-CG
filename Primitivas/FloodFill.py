@@ -1,4 +1,4 @@
-import SetPixel
+from Primitivas.SetPixel import setPixel
 
 def flood_fill_iterativo(superficie, x, y, cor_preenchimento, cor_borda):
     largura = superficie.get_width()
@@ -17,7 +17,7 @@ def flood_fill_iterativo(superficie, x, y, cor_preenchimento, cor_borda):
         if cor_atual == cor_borda or cor_atual == cor_preenchimento:
             continue
 
-        SetPixel.setPixel(superficie, x, y, cor_preenchimento)
+        setPixel(superficie, x, y, cor_preenchimento)
 
         pilha.append((x + 1, y))
         pilha.append((x - 1, y))

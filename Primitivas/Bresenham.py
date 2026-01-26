@@ -1,4 +1,4 @@
-import SetPixel
+from Primitivas.SetPixel import setPixel
 
 def bresenham(superficie, x0, y0, x1, y1, cor):
     steep = abs(y1 - y0) > abs(x1 - x0)
@@ -23,9 +23,9 @@ def bresenham(superficie, x0, y0, x1, y1, cor):
     y = y0
     for x in range(x0, x1 + 1):
         if steep:
-            SetPixel.setPixel(superficie, y, x, cor)
+            setPixel(superficie, y, x, cor)
         else:
-            SetPixel.setPixel(superficie, x, y, cor)
+            setPixel(superficie, x, y, cor)
 
         if d > 0:
             y += ystep
