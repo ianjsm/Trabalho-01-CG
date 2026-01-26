@@ -1,0 +1,20 @@
+import SetPixel
+
+def reta_ingenua(superficie, x0, y0, x1, y1, cor):
+    # Garantir x crescente
+    if x0 > x1:
+        x0, x1 = x1, x0
+        y0, y1 = y1, y0
+
+    dx = x1 - x0
+
+    # Evita divisão por zero (reta vertical não é tratada aqui)
+    if dx == 0:
+        return
+
+    m = (y1 - y0) / dx
+    b = y0 - m * x0
+
+    for x in range(x0, x1 + 1):
+        y = m * x + b
+        SetPixel.setPixel(superficie, x, round(y), cor)
