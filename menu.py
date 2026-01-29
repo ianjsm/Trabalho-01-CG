@@ -1,4 +1,10 @@
+import pygame
 from Primitivas import BresenhamReta, Circulo, Elipse, FloodFill, ScanlineFill
+
+ABERTURA = 0
+MENU = 1
+SAIR = 2
+estado_atual = ABERTURA
 
 def desenhar_abertura(superficie, largura, altura):
     # Paleta de Cores
@@ -11,6 +17,12 @@ def desenhar_abertura(superficie, largura, altura):
     VERMELHO_SANGUE = (130, 0, 0)
     
     superficie.fill(FUNDO)
+
+    # --- TÍTULO DO JOGO ---
+    fonte_titulo = pygame.font.Font(None, 64)
+    texto_titulo = fonte_titulo.render("ECHO", True, (200, 0, 0))
+    rect_titulo = texto_titulo.get_rect(center=(largura // 2, 80))
+    superficie.blit(texto_titulo, rect_titulo)
 
     # --- 1. CAPA (SCANLINE) ---
     gola_esq = [(250, 400), (400, 450), (400, 300), (200, 200)]
@@ -60,4 +72,56 @@ def desenhar_abertura(superficie, largura, altura):
     desenhar_presa(370, 420)
     desenhar_presa(420, 420)
 
-    print("Vampiro com boca e presas renderizado com sucesso!")
+def desenhar_botao(superficie, x, y, w, h, cor_borda, cor_fundo):
+    # Borda
+    BresenhamReta.bresenham(superficie, x, y, x+w, y, cor_borda)
+    BresenhamReta.bresenham(superficie, x, y, x, y+h, cor_borda)
+    BresenhamReta.bresenham(superficie, x+w, y, x+w, y+h, cor_borda)
+    BresenhamReta.bresenham(superficie, x, y+h, x+w, y+h, cor_borda)
+
+    # Preenchimento
+    ScanlineFill.scanline_fill(
+        superficie,
+        [(x+1,y+1),(x+w-1,y+1),(x+w-1,y+h-1),(x+1,y+h-1)],
+        cor_fundo
+    )
+
+def mouse_sobre(mx, my, x, y, w, h):
+    return x <= mx <= x+w and y <= my <= y+h
+
+def desenhar_menu(superficie, mouse_pos):
+    FUNDO = (10, 0, 0)
+    BORDA = (255, 0, 0)
+    FUNDO_BTN = (60, 0, 0)
+    HOVER = (120, 0, 0)
+    TEXTO = (255, 255, 255)
+
+    superficie.fill(FUNDO)
+
+    bx, bw, bh = 300, 200, 60
+    by_play = 250
+    by_quit = 340
+
+    mx, my = mouse_pos
+
+    # PLAY
+    cor_play = HOVER if mouse_sobre(mx, my, bx, by_play, bw, bh) else FUNDO_BTN
+    desenhar_botao(superficie, bx, by_play, bw, bh, BORDA, cor_play)
+
+    # QUIT
+    cor_quit = HOVER if mouse_sobre(mx, my, bx, by_quit, bw, bh) else FUNDO_BTN
+    desenhar_botao(superficie, bx, by_quit, bw, bh, BORDA, cor_quit)
+
+    # --- TEXTO (SAME WAY AS GAME TITLE) ---
+    fonte = pygame.font.Font(None, 36)
+
+    texto_play = fonte.render("PLAY", True, TEXTO)
+    texto_quit = fonte.render("QUIT", True, TEXTO)
+
+    rect_play = texto_play.get_rect(center=(bx + bw // 2, by_play + bh // 2))
+    rect_quit = texto_quit.get_rect(center=(bx + bw // 2, by_quit + bh // 2))
+
+    superficie.blit(texto_play, rect_play)
+    superficie.blit(texto_quit, rect_quit)
+
+    pygame.display.flip()

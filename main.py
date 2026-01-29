@@ -1,6 +1,6 @@
 import pygame
 import sys
-from menu import desenhar_abertura
+from menu import desenhar_abertura, desenhar_botao, desenhar_menu, mouse_sobre
 from Primitivas import SetPixel, Elipse, Circulo, ScanlineFill, BresenhamReta
 from Primitivas import Transform, Camera, Clipping, Texturizador, FloodFill
 from Funcao import Colisao
@@ -13,6 +13,8 @@ COR_VAMPIRO = (200, 0, 0) # Vermelho escuro
 class JogoVampiro:
     def __init__(self):
         pygame.init()
+        self.estado = "ABERTURA"
+        self.menu_renderizado = False
         self.tela = pygame.display.set_mode((LARGURA, ALTURA))
         self.clock = pygame.time.Clock()
         
@@ -71,30 +73,65 @@ class JogoVampiro:
             self.sprite_vampiro = pygame.Surface((32, 32))
             self.sprite_vampiro.fill((255, 0, 0))
 
-        self.estado = "MENU"
         self.menu_renderizado = False
 
     def rodar(self):
         while True:
-            if self.estado == "MENU":
-                if not self.menu_renderizado:
-                    desenhar_abertura(self.tela, LARGURA, ALTURA)
-                    self.menu_renderizado = True
-                    pygame.display.flip()
-                        
-                # Tratamento de eventos no Menu
-                for evento in pygame.event.get():
-                    if evento.type == pygame.QUIT:
-                        pygame.quit()
-                        sys.exit()
+            mouse_pos = pygame.mouse.get_pos()
+
+            # ---------------- EVENTS ----------------
+            for evento in pygame.event.get():
+                if evento.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+                # -------- ABERTURA --------
+                if self.estado == "ABERTURA":
+                    if evento.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
+                        self.estado = "MENU"
+
+                # -------- MENU --------
+                elif self.estado == "MENU":
+                    if evento.type == pygame.MOUSEBUTTONDOWN:
+                        bx, bw, bh = 300, 200, 60
+
+                        if mouse_sobre(*mouse_pos, bx, 250, bw, bh):
+                            self.estado = "JOGANDO"
+
+                        if mouse_sobre(*mouse_pos, bx, 340, bw, bh):
+                            pygame.quit()
+                            sys.exit()
+
                     if evento.type == pygame.KEYDOWN:
-                        self.estado = "JOGANDO"
-            
+                        if evento.key == pygame.K_ESCAPE:
+                            pygame.quit()
+                            sys.exit()
+
+                # -------- JOGANDO --------
+                elif self.estado == "JOGANDO":
+                    if evento.type == pygame.KEYDOWN:
+                        if evento.key == pygame.K_ESCAPE:
+                            self.estado = "MENU"
+
+                        if evento.key == pygame.K_SPACE and self.mana >= 20:
+                            self.ondas.append(0)
+                            self.mana -= 20
+
+            # ---------------- STATES ----------------
+            if self.estado == "ABERTURA":
+                desenhar_abertura(self.tela, LARGURA, ALTURA)
+
+            elif self.estado == "MENU":
+                desenhar_menu(self.tela, mouse_pos)
+
             elif self.estado == "JOGANDO":
                 self.processar_input()
                 self.atualizar()
                 self.desenhar()
-                self.clock.tick(60)
+
+            pygame.display.flip()
+            self.clock.tick(60)
+
 
     def processar_input(self):
         teclas = pygame.key.get_pressed()
@@ -126,14 +163,6 @@ class JogoVampiro:
             self.pos_x = proximo_x
             self.pos_y = proximo_y
         # ---------------------------
-
-        for evento in pygame.event.get():
-            if evento.type == pygame.QUIT:
-                pygame.quit(); sys.exit()
-            if evento.type == pygame.KEYDOWN:
-                if evento.key == pygame.K_SPACE and self.mana >= 20:
-                    self.ondas.append(0)
-                    self.mana -= 20
 
     def atualizar(self):
         # Animação das ondas (Requisito: Animação)
