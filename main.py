@@ -1,6 +1,6 @@
 import pygame
 import sys
-from menu import desenhar_abertura
+from menu import desenhar_abertura, desenhar_botao, desenhar_menu, mouse_sobre
 from Primitivas import SetPixel, Elipse, Circulo, ScanlineFill, BresenhamReta
 from Primitivas import Transform, Camera, Clipping, Texturizador, FloodFill
 from Funcao import Colisao
@@ -13,6 +13,8 @@ COR_VAMPIRO = (200, 0, 0) # Vermelho escuro
 class JogoVampiro:
     def __init__(self):
         pygame.init()
+        self.estado = "ABERTURA"
+        self.menu_renderizado = False
         self.tela = pygame.display.set_mode((LARGURA, ALTURA))
         self.clock = pygame.time.Clock()
         
@@ -29,9 +31,8 @@ class JogoVampiro:
         self.carregar_fase(0)
 
         self.camera = Camera.Camera(LARGURA, ALTURA, LARGURA, ALTURA)
+
         self.sprite_vampiro = self.carregar_assets()
-        self.estado = "MENU"
-        self.menu_renderizado = False
     
     def definir_fases(self):
         # Cada fase tem seu mapa, spawn de inimigos e o índice do objetivo (último polígono)
@@ -83,39 +84,71 @@ class JogoVampiro:
                     {"x": 60, "y": 60, "vel": 1.5},   # Canto superior esquerdo
                     {"x": 740, "y": 540, "vel": 2.0}, # Canto inferior direito
                     {"x": 60, "y": 540, "vel": 1.2},  # Canto inferior esquerdo 
-                    {"x": 400, "y": 60, "vel": 1.8},
-                    {"x": 240, "y": 340, "vel": 3.0},   
+                    {"x": 400, "y": 40, "vel": 1.8},
+                    {"x": 240, "y": 340, "vel": 2.0},   
                 ]
             }
         ]
 
     def rodar(self):
         while True:
-            if self.estado == "MENU":
-                if not self.menu_renderizado:
-                    desenhar_abertura(self.tela, LARGURA, ALTURA)
-                    self.menu_renderizado = True
-                    pygame.display.flip()
-                        
-                # Tratamento de eventos no Menu
-                for evento in pygame.event.get():
-                    if evento.type == pygame.QUIT:
-                        pygame.quit()
-                        sys.exit()
+            mouse_pos = pygame.mouse.get_pos()
+
+            # ---------------- EVENTS ----------------
+            for evento in pygame.event.get():
+                if evento.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+                # -------- ABERTURA --------
+                if self.estado == "ABERTURA":
+                    if evento.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
+                        self.estado = "MENU"
+
+                # -------- MENU --------
+                elif self.estado == "MENU":
+                    if evento.type == pygame.MOUSEBUTTONDOWN:
+                        bx, bw, bh = 300, 200, 60
+
+                        if mouse_sobre(*mouse_pos, bx, 250, bw, bh):
+                            self.estado = "JOGANDO"
+
+                        if mouse_sobre(*mouse_pos, bx, 340, bw, bh):
+                            pygame.quit()
+                            sys.exit()
+
                     if evento.type == pygame.KEYDOWN:
-                        self.estado = "JOGANDO"
-            
+                        if evento.key == pygame.K_ESCAPE:
+                            pygame.quit()
+                            sys.exit()
+
+                # -------- JOGANDO --------
+                elif self.estado == "JOGANDO":
+                    if evento.type == pygame.KEYDOWN:
+                        if evento.key == pygame.K_ESCAPE:
+                            self.estado = "MENU"
+
+                        if evento.key == pygame.K_SPACE and self.mana >= 20:
+                            self.ondas.append(0)
+                            self.mana -= 20
+
+            # ---------------- STATES ----------------
+            if self.estado == "ABERTURA":
+                desenhar_abertura(self.tela, LARGURA, ALTURA)
+
+            elif self.estado == "MENU":
+                desenhar_menu(self.tela, mouse_pos)
+
             elif self.estado == "JOGANDO":
                 self.processar_input()
                 self.atualizar()
                 self.desenhar()
-                self.clock.tick(60)
 
             elif self.estado == "MORTE":
                 self.exibir_tela_morte() 
-                for evento in pygame.event.get():
-                    if evento.type == pygame.QUIT:
-                        pygame.quit(); sys.exit()
+
+            pygame.display.flip()
+            self.clock.tick(60)
 
     def carregar_fase(self, n):
         fase = self.dados_fases[n]
@@ -163,14 +196,6 @@ class JogoVampiro:
             self.pos_x = proximo_x
             self.pos_y = proximo_y
         # ---------------------------
-
-        for evento in pygame.event.get():
-            if evento.type == pygame.QUIT:
-                pygame.quit(); sys.exit()
-            if evento.type == pygame.KEYDOWN:
-                if evento.key == pygame.K_SPACE and self.mana >= 20:
-                    self.ondas.append(0)
-                    self.mana -= 20
 
     def atualizar(self):
         # 1. Movimentação de TODOS os inimigos da fase
@@ -339,11 +364,17 @@ class JogoVampiro:
             desenhar_letra(l, 335 + (i * 18), 318, cor_btn1)
 
         if cor_btn1 == VERMELHO_VIVO and clique[0]:
-            self.pos_x, self.pos_y = LARGURA // 2, ALTURA // 2
-            self.mana = 100
-            self.ondas = []
-            self.inimigo_x, self.inimigo_y = 60, 60
+            # 1. Volta para a primeira fase (índice 0)
+            self.fase_atual = 0 
+            
+            # 2. Usa a função que já tem para resetar mapa, inimigos e posição
+            self.carregar_fase(0) 
+            
+            # 3. Muda o estado para voltar ao jogo
             self.estado = "JOGANDO"
+            
+            # Pequeno delay ou reset de eventos para não disparar cliques acidentais
+            pygame.event.clear()
 
         # --- BOTÃO SAIR ---
         cor_btn2 = VERMELHO_VIVO if (300 < mouse_pos[0] < 500 and 400 < mouse_pos[1] < 450) else BRANCO
