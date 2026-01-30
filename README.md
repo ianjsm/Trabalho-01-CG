@@ -91,7 +91,7 @@ Ao executar o comando, a janela do jogo será aberta e o jogador poderá interag
 
 Setas do teclado: movimentação do morcego
 
-Tecla definida no jogo: emissão do eco
+Espaço: emissão do eco
 
 ---
 
