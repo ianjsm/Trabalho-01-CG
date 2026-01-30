@@ -2,7 +2,7 @@ from Primitivas.SetPixel import setPixel
 
 
 def mapear_textura(superficie, pontos, imagem_textura):
-    """(Mantido para compatibilidade)"""
+
     tex_w, tex_h = imagem_textura.get_size()
     xs = [p[0] for p in pontos]
     ys = [p[1] for p in pontos]
@@ -27,9 +27,7 @@ def mapear_textura(superficie, pontos, imagem_textura):
 
 
 def scanline_textura_tiled(superficie, pontos, textura, intensidade=1.0):
-    """
-    Preenche polígono com textura repetida e suporta INTENSIDADE (Fade).
-    """
+
     if not pontos or not textura:
         return
 
@@ -39,7 +37,6 @@ def scanline_textura_tiled(superficie, pontos, textura, intensidade=1.0):
     y_max = max(ys)
     n = len(pontos)
 
-    # Garante que intensidade fique entre 0 e 1
     intensidade = max(0.0, min(1.0, intensidade))
 
     for y in range(y_min, y_max + 1):
@@ -66,12 +63,11 @@ def scanline_textura_tiled(superficie, pontos, textura, intensidade=1.0):
                 x_inicio = int(intersecoes_x[i])
                 x_fim = int(intersecoes_x[i + 1])
                 for x in range(x_inicio, x_fim + 1):
-                    # TILING
+
                     u = x % tex_w
                     v = y % tex_h
                     cor_original = textura.get_at((u, v))
 
-                    # APLICA O FADE (Escurecer)
                     if intensidade < 1.0:
                         r = int(cor_original[0] * intensidade)
                         g = int(cor_original[1] * intensidade)

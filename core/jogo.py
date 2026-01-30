@@ -1,13 +1,7 @@
 import pygame
 import sys
-from config import (
-    LARGURA,
-    ALTURA,
-    COR_FUNDO,
-    COR_INTERFACE_BG,
-    COR_INTERFACE_MANA,
-    COR_ONDA,
-)
+import math
+from config import LARGURA, ALTURA, COR_INTERFACE_BG, COR_INTERFACE_MANA, COR_ONDA
 from texturas import gerar_textura_pedra, gerar_textura_objetivo, gerar_chao_procedural
 from fases import get_fases
 
@@ -30,37 +24,47 @@ from Primitivas import (
 class JogoVampiro:
     def __init__(self):
         pygame.init()
-        pygame.display.set_caption("ECHO - O Jogo do Vampiro")
-
-        icone = pygame.image.load("Imagens/vampiro.png")
-        pygame.display.set_icon(icone)
+        pygame.display.set_caption("ECHO - A Fuga do Vampiro")
+        try:
+            pygame.display.set_icon(pygame.image.load("Imagens/vampiro.png"))
+        except:
+            pass
 
         self.estado = "ABERTURA"
         self.tela = pygame.display.set_mode((LARGURA, ALTURA))
         self.clock = pygame.time.Clock()
+        self.fonte_ui = pygame.font.Font(None, 24)
 
         self.tex_parede = gerar_textura_pedra(64, 64)
         self.tex_objetivo = gerar_textura_objetivo(64, 64)
-        self.sprite_vampiro = self.carregar_sprite()
 
-        self.fonte_ui = pygame.font.Font(None, 24)
+        self.sprite_vampiro = self.carregar_imagem("Imagens/vampiro.png", (255, 0, 0))
+        self.sprite_morcego = self.carregar_imagem("Imagens/morcego.png", (0, 0, 0))
+        self.sprite_atual = self.sprite_vampiro
 
         self.particulas_chao = gerar_chao_procedural(LARGURA, ALTURA, 5000)
 
         self.fases_dados = get_fases()
         self.fase_atual = 0
+        self.fase_escura = True
         self.carregar_fase(0)
 
         self.camera = Camera.Camera(LARGURA, ALTURA, LARGURA, ALTURA)
-        self.pos_x, self.pos_y = LARGURA // 2, ALTURA // 2
+
         self.mana = 100.0
         self.ondas = []
+        self.boost_timer = 0
+
+        self.transicao_ativa = False
+        self.alpha_fade = 0
+        self.direcao_fade = 1
+        self.overlay_fade = pygame.Surface((LARGURA, ALTURA))
+        self.overlay_fade.fill((255, 255, 255))
 
     def rodar(self):
         while True:
             mouse_pos = pygame.mouse.get_pos()
             eventos = pygame.event.get()
-
             self.tratar_eventos_globais(eventos)
 
             if self.estado == "ABERTURA":
@@ -73,11 +77,46 @@ class JogoVampiro:
                 self.tratar_jogo(eventos)
                 self.atualizar_jogo()
                 self.desenhar_jogo()
+
+                if self.transicao_ativa or self.alpha_fade > 0:
+                    self.processar_transicao()
+
             elif self.estado == "MORTE":
                 self.exibir_tela_morte(mouse_pos)
 
             pygame.display.flip()
             self.clock.tick(60)
+
+    def iniciar_transicao_fase(self):
+        self.transicao_ativa = True
+        self.direcao_fade = 1
+
+    def processar_transicao(self):
+        velocidade_fade = 5
+        self.alpha_fade += velocidade_fade * self.direcao_fade
+
+        if self.alpha_fade >= 255:
+            self.alpha_fade = 255
+            if self.transicao_ativa:
+                self.avancar_fase()
+                self.direcao_fade = -1
+                self.transicao_ativa = False
+
+        elif self.alpha_fade <= 0:
+            self.alpha_fade = 0
+            self.direcao_fade = 0
+
+        self.overlay_fade.set_alpha(self.alpha_fade)
+        self.tela.blit(self.overlay_fade, (0, 0))
+
+    def avancar_fase(self):
+        if self.fase_atual < len(self.fases_dados) - 1:
+            self.fase_atual += 1
+            self.carregar_fase(self.fase_atual)
+        else:
+            self.fase_atual = 0
+            self.carregar_fase(0)
+            self.estado = "MENU"
 
     def tratar_eventos_globais(self, eventos):
         for ev in eventos:
@@ -100,20 +139,42 @@ class JogoVampiro:
                 self.sair()
 
     def tratar_jogo(self, eventos):
+        if self.alpha_fade > 200:
+            return
+
         for ev in eventos:
             if ev.type == pygame.KEYDOWN:
                 if ev.key == pygame.K_ESCAPE:
                     self.estado = "MENU"
-                if ev.key == pygame.K_SPACE and self.mana >= 20:
-                    self.ondas.append(0)
-                    self.mana -= 20
+
+                if ev.key == pygame.K_SPACE:
+                    if self.fase_escura:
+
+                        if self.mana >= 20:
+                            self.ondas.append(0)
+                            self.mana -= 20
+                    else:
+
+                        if self.mana > 10:
+                            self.boost_timer = 25
+
         self.processar_movimento()
         self.processar_zoom()
 
     def processar_movimento(self):
         keys = pygame.key.get_pressed()
+
+        if self.fase_escura:
+            vel = 2.0
+        else:
+
+            if self.boost_timer > 0:
+                vel = 10.0
+            else:
+                vel = 5.0
+
         px, py = self.pos_x, self.pos_y
-        vel = 3
+
         if keys[pygame.K_LEFT]:
             px -= vel
         if keys[pygame.K_RIGHT]:
@@ -160,6 +221,20 @@ class JogoVampiro:
         return True
 
     def atualizar_jogo(self):
+        if self.transicao_ativa:
+            return
+
+        if self.boost_timer > 0:
+            self.boost_timer -= 1
+
+            self.mana -= 5.0
+            if self.mana <= 0:
+                self.mana = 0
+                self.boost_timer = 0
+        else:
+
+            if self.mana < 100:
+                self.mana += 0.7
 
         for ini in self.inimigos:
             dx, dy = self.pos_x - ini["x"], self.pos_y - ini["y"]
@@ -179,52 +254,34 @@ class JogoVampiro:
             if dist < 25:
                 self.estado = "MORTE"
 
-        self.checar_objetivo()
-
-        self.ondas = [r + 5 for r in self.ondas if r < 250]
-        if self.mana < 100:
-            self.mana += 0.2
-
-        if len(self.mapa) > 1:
-            self.mapa[0] = Transform.Transformador.rotacionar(
-                self.mapa[0], 1, self.mapa[0][0]
-            )
-
-    def checar_objetivo(self):
         obj = self.mapa[-1]
         cx = sum(p[0] for p in obj) / len(obj)
         cy = sum(p[1] for p in obj) / len(obj)
         if (
             (self.pos_x - cx) ** 2 + (self.pos_y - cy) ** 2
         ) ** 0.5 < 25 or Colisao.ponto_em_poligono(self.pos_x, self.pos_y, obj):
-            if self.fase_atual < len(self.fases_dados) - 1:
-                self.fase_atual += 1
-                self.carregar_fase(self.fase_atual)
-            else:
-                self.fase_atual = 0
-                self.carregar_fase(0)
-                self.estado = "MENU"
+            self.iniciar_transicao_fase()
+
+        self.ondas = [r + 5 for r in self.ondas if r < 250]
+
+        if self.fase_escura and len(self.mapa) > 1:
+            self.mapa[0] = Transform.Transformador.rotacionar(
+                self.mapa[0], 1, self.mapa[0][0]
+            )
 
     def desenhar_jogo(self):
-        self.tela.fill(COR_FUNDO)
-
-        if self.ondas:
-            maior_onda = max(self.ondas)
-            alcance_luz_chao = 80
-
-            for px, py, cor in self.particulas_chao:
-                dist = ((px - self.pos_x) ** 2 + (py - self.pos_y) ** 2) ** 0.5
-
-                if maior_onda - alcance_luz_chao < dist < maior_onda:
-                    SetPixel.setPixel(self.tela, px, py, cor)
+        if self.fase_escura:
+            self.desenhar_modo_escuro()
+        else:
+            self.desenhar_modo_claro()
 
         pontos_bg = [(10, 10), (210, 10), (210, 30), (10, 30)]
         ScanlineFill.scanline_fill(self.tela, pontos_bg, COR_INTERFACE_BG)
 
         largura_mana = int(self.mana * 2)
-        
+
         if largura_mana > 0:
-            xf = 10 + largura_mana 
+            xf = 10 + largura_mana
             pontos_mana = [(10, 10), (xf, 10), (xf, 30), (10, 30)]
             ScanlineFill.scanline_fill(self.tela, pontos_mana, COR_INTERFACE_MANA)
         texto_msg = self.fonte_ui.render(
@@ -232,44 +289,87 @@ class JogoVampiro:
         )
         self.tela.blit(texto_msg, (10, 35))
 
-        rect = self.sprite_vampiro.get_rect(center=(self.pos_x, self.pos_y))
-        self.tela.blit(self.sprite_vampiro, rect)
+        rect = self.sprite_atual.get_rect(center=(self.pos_x, self.pos_y))
+        self.tela.blit(self.sprite_atual, rect)
 
-        for raio in self.ondas:
-            if raio < 250:
-                Circulo.Circulo(self.tela, self.pos_x, self.pos_y, raio, COR_ONDA)
+        if self.fase_escura:
+            for raio in self.ondas:
+                if raio < 250:
+                    Circulo.Circulo(self.tela, self.pos_x, self.pos_y, raio, COR_ONDA)
 
-            for i, poligono in enumerate(self.mapa):
-                eh_obj = i == len(self.mapa) - 1
-                cor = (0, 150, 255) if eh_obj else (0, 100, 0)
-                self.revelar_obstaculo(poligono, raio, cor, eh_obj)
+                for i, poligono in enumerate(self.mapa):
+                    eh_obj = i == len(self.mapa) - 1
+                    cor = (0, 150, 255) if eh_obj else (0, 100, 0)
+                    self.revelar_obstaculo(poligono, raio, cor, eh_obj)
 
-            for ini in self.inimigos:
-                if (
-                    abs(
-                        ((ini["x"] - self.pos_x) ** 2 + (ini["y"] - self.pos_y) ** 2)
-                        ** 0.5
-                        - raio
-                    )
-                    < 30
-                ):
-                    Circulo.Circulo(
-                        self.tela, int(ini["x"]), int(ini["y"]), 12, (255, 0, 0)
-                    )
+                for ini in self.inimigos:
+                    if (
+                        abs(
+                            (
+                                (ini["x"] - self.pos_x) ** 2
+                                + (ini["y"] - self.pos_y) ** 2
+                            )
+                            ** 0.5
+                            - raio
+                        )
+                        < 30
+                    ):
+                        Circulo.Circulo(
+                            self.tela, int(ini["x"]), int(ini["y"]), 12, (255, 0, 0)
+                        )
+
+    def desenhar_modo_escuro(self):
+        self.tela.fill((0, 0, 0))
+
+        if self.ondas:
+            maior = max(self.ondas)
+            for px, py, cor in self.particulas_chao:
+                dist = ((px - self.pos_x) ** 2 + (py - self.pos_y) ** 2) ** 0.5
+                if maior - 80 < dist < maior:
+                    SetPixel.setPixel(self.tela, px, py, cor)
+
+    def desenhar_modo_claro(self):
+        self.tela.fill((200, 230, 255))
+
+        for i, poligono in enumerate(self.mapa):
+            pts_t = [self.camera.mundo_para_tela(p[0], p[1]) for p in poligono]
+            eh_obj = i == len(self.mapa) - 1
+            try:
+                tex = self.tex_objetivo if eh_obj else self.tex_parede
+                Texturizador.scanline_textura_tiled(self.tela, pts_t, tex, 1.0)
+            except:
+                cor = (0, 150, 255) if eh_obj else (100, 100, 100)
+                ScanlineFill.scanline_fill(self.tela, pts_t, cor)
+            if len(pts_t) > 1:
+                pygame.draw.lines(self.tela, (0, 0, 0), True, pts_t, 2)
+
+        for ini in self.inimigos:
+            self.desenhar_sol(int(ini["x"]), int(ini["y"]), 15)
+
+        if self.boost_timer > 0:
+            for i in range(1, 4):
+                offset = 5 * i
+                Circulo.Circulo(
+                    self.tela, self.pos_x, self.pos_y + offset, 5, (255, 255, 255)
+                )
+
+    def desenhar_sol(self, x, y, raio):
+        Circulo.Circulo(self.tela, x, y, raio, (255, 200, 0))
+        FloodFill.flood_fill_iterativo(self.tela, x, y, (255, 255, 0), (255, 200, 0))
+        for angulo in range(0, 360, 45):
+            rad = math.radians(angulo)
+            x_fim = x + int(math.cos(rad) * (raio + 10))
+            y_fim = y + int(math.sin(rad) * (raio + 10))
+            BresenhamReta.bresenham(self.tela, x, y, x_fim, y_fim, (255, 100, 0))
 
     def revelar_obstaculo(self, pontos, raio_onda, cor_base, eh_objetivo):
         cx = sum(p[0] for p in pontos) / len(pontos)
         cy = sum(p[1] for p in pontos) / len(pontos)
         dist_c = ((cx - self.pos_x) ** 2 + (cy - self.pos_y) ** 2) ** 0.5
-
         diff = raio_onda - dist_c
-
         alcance_fade = 80
-
         if 0 < diff < alcance_fade:
-
             intensidade = 1.0 - (diff / alcance_fade)
-
             if not self.esta_oculto(pontos, (cx, cy)):
                 pts_t = [self.camera.mundo_para_tela(p[0], p[1]) for p in pontos]
                 try:
@@ -284,21 +384,20 @@ class JogoVampiro:
                         int(cor_base[2] * intensidade),
                     )
                     ScanlineFill.scanline_fill(self.tela, pts_t, c_fade)
-
         for i in range(len(pontos)):
             p1, p2 = pontos[i], pontos[(i + 1) % len(pontos)]
-            pm = ((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2)
-            d_aresta = ((pm[0] - self.pos_x) ** 2 + (pm[1] - self.pos_y) ** 2) ** 0.5
-
-            diff_a = raio_onda - d_aresta
+            d_a = (
+                (((p1[0] + p2[0]) / 2) - self.pos_x) ** 2
+                + (((p1[1] + p2[1]) / 2) - self.pos_y) ** 2
+            ) ** 0.5
+            diff_a = raio_onda - d_a
             if 0 < diff_a < alcance_fade:
-                intensidade_a = 1.0 - (diff_a / alcance_fade)
+                inten_a = 1.0 - (diff_a / alcance_fade)
                 c_fade_a = (
-                    int(cor_base[0] * intensidade_a),
-                    int(cor_base[1] * intensidade_a),
-                    int(cor_base[2] * intensidade_a),
+                    int(cor_base[0] * inten_a),
+                    int(cor_base[1] * inten_a),
+                    int(cor_base[2] * inten_a),
                 )
-
                 p1t = self.camera.mundo_para_tela(*p1)
                 p2t = self.camera.mundo_para_tela(*p2)
                 acc, x1, y1, x2, y2 = Clipping.cohen_sutherland_clip(
@@ -319,6 +418,33 @@ class JogoVampiro:
                 ):
                     return True
         return False
+
+    def carregar_fase(self, n):
+        fase = self.fases_dados[n]
+        self.mapa = [list(p) for p in fase["mapa"]]
+        self.inimigos = [dict(i) for i in fase["inimigos"]]
+        self.ondas = []
+        self.mana = 100
+
+        if n == 0:
+            self.fase_escura = True
+            self.sprite_atual = self.sprite_vampiro
+            self.pos_x, self.pos_y = LARGURA // 2, ALTURA // 2
+        else:
+            self.fase_escura = False
+            self.sprite_atual = self.sprite_morcego
+
+            self.pos_x, self.pos_y = 80, 80
+
+    def carregar_imagem(self, caminho, cor_fallback):
+        try:
+            return pygame.transform.scale(
+                pygame.image.load(caminho).convert_alpha(), (40, 40)
+            )
+        except:
+            s = pygame.Surface((32, 32))
+            s.fill(cor_fallback)
+            return s
 
     def exibir_tela_morte(self, mouse_pos):
         self.tela.fill((30, 0, 0))
@@ -432,24 +558,6 @@ class JogoVampiro:
         if mouse_over_quit and clique[0]:
             pygame.quit()
             sys.exit()
-
-    def carregar_fase(self, n):
-        fase = self.fases_dados[n]
-        self.mapa = [list(p) for p in fase["mapa"]]
-        self.inimigos = [dict(i) for i in fase["inimigos"]]
-        self.pos_x, self.pos_y = LARGURA // 2, ALTURA // 2
-        self.ondas = []
-        self.mana = 100
-
-    def carregar_sprite(self):
-        try:
-            return pygame.transform.scale(
-                pygame.image.load("Imagens/vampiro.png").convert_alpha(), (40, 40)
-            )
-        except:
-            s = pygame.Surface((32, 32))
-            s.fill((255, 0, 0))
-            return s
 
     def sair(self):
         pygame.quit()
