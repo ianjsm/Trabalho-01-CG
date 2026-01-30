@@ -1,12 +1,13 @@
 from Primitivas.SetPixel import setPixel
 
+
 def Circulo(superficie, xc, yc, r, cor):
     x = 0
     y = r
     d = 3 - 2 * r
-    
+
     def desenhar_pontos(xc, yc, x, y):
-        # Espelha o ponto nos 8 octantes
+
         setPixel(superficie, xc + x, yc + y, cor)
         setPixel(superficie, xc - x, yc + y, cor)
         setPixel(superficie, xc + x, yc - y, cor)

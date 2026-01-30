@@ -1,5 +1,6 @@
 import math
 
+
 class Transformador:
     @staticmethod
     def transladar(pontos, dx, dy):
@@ -7,7 +8,7 @@ class Transformador:
 
     @staticmethod
     def escalar(pontos, sx, sy, pivô=(0, 0)):
-        # Escala em relação a um ponto fixo (pivô)
+
         novos_pontos = []
         px, py = pivô
         for x, y in pontos:
@@ -18,15 +19,15 @@ class Transformador:
 
     @staticmethod
     def rotacionar(pontos, angulo_graus, pivô=(0, 0)):
-        # Rotação em relação a um ponto fixo (pivô)
+
         angulo_rad = math.radians(angulo_graus)
         cos_a = math.cos(angulo_rad)
         sin_a = math.sin(angulo_rad)
         px, py = pivô
-        
+
         novos_pontos = []
         for x, y in pontos:
-            # Move para a origem, rotaciona e volta
+
             nx = px + (x - px) * cos_a - (y - py) * sin_a
             ny = py + (x - px) * sin_a + (y - py) * cos_a
             novos_pontos.append((nx, ny))

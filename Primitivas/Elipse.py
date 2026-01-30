@@ -1,10 +1,10 @@
 from Primitivas.SetPixel import setPixel
 
+
 def elipse_ponto_medio(superficie, xc, yc, rx, ry, cor):
     x = 0
     y = ry
 
-    # Região 1
     d1 = (ry**2) - (rx**2 * ry) + (0.25 * rx**2)
     dx = 2 * ry**2 * x
     dy = 2 * rx**2 * y
@@ -25,8 +25,7 @@ def elipse_ponto_medio(superficie, xc, yc, rx, ry, cor):
             dy = dy - (2 * rx**2)
             d1 = d1 + dx - dy + (ry**2)
 
-    # Região 2
-    d2 = ((ry**2) * ((x + 0.5)**2)) + ((rx**2) * ((y - 1)**2)) - (rx**2 * ry**2)
+    d2 = ((ry**2) * ((x + 0.5) ** 2)) + ((rx**2) * ((y - 1) ** 2)) - (rx**2 * ry**2)
     while y >= 0:
         setPixel(superficie, xc + x, yc + y, cor)
         setPixel(superficie, xc - x, yc + y, cor)

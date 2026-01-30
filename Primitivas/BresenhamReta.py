@@ -1,7 +1,8 @@
 from Primitivas.SetPixel import setPixel
 
+
 def bresenham(superficie, x0, y0, x1, y1, cor):
-    # Flags para transformações
+
     steep = abs(y1 - y0) > abs(x1 - x0)
     if steep:
         x0, y0 = y0, x0
@@ -19,7 +20,6 @@ def bresenham(superficie, x0, y0, x1, y1, cor):
         ystep = -1
         dy = -dy
 
-    # Bresenham clássico
     d = 2 * dy - dx
     incE = 2 * dy
     incNE = 2 * (dy - dx)

@@ -1,5 +1,6 @@
 from Primitivas.SetPixel import setPixel
 
+
 def lerp_cor(cor1, cor2, t):
     """Mistura duas cores baseado em um fator t (0.0 a 1.0)"""
     r = int(cor1[0] + (cor2[0] - cor1[0]) * t)
@@ -7,18 +8,20 @@ def lerp_cor(cor1, cor2, t):
     b = int(cor1[2] + (cor2[2] - cor1[2]) * t)
     return (r, g, b)
 
+
 def scanline_fill(superficie, pontos, cor_inicio, cor_fim=None):
     """
     Se cor_fim for fornecido, faz um gradiente vertical.
     Se não, faz preenchimento sólido com cor_inicio.
     """
-    if not pontos: return
-    
+    if not pontos:
+        return
+
     ys = [p[1] for p in pontos]
     y_min = int(min(ys))
     y_max = int(max(ys))
     n = len(pontos)
-    
+
     altura_total = y_max - y_min if y_max != y_min else 1
 
     for y in range(y_min, y_max + 1):
@@ -28,7 +31,8 @@ def scanline_fill(superficie, pontos, cor_inicio, cor_fim=None):
             x0, y0 = pontos[i]
             x1, y1 = pontos[(i + 1) % n]
 
-            if y0 == y1: continue
+            if y0 == y1:
+                continue
 
             if y0 > y1:
                 x0, y0, x1, y1 = x1, y1, x0, y0
@@ -41,7 +45,6 @@ def scanline_fill(superficie, pontos, cor_inicio, cor_fim=None):
 
         intersecoes_x.sort()
 
-        # Define a cor da linha (Sólida ou Gradiente)
         if cor_fim:
             t = (y - y_min) / altura_total
             cor_atual = lerp_cor(cor_inicio, cor_fim, t)
