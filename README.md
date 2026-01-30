@@ -46,3 +46,74 @@ As cores representam semanticamente os elementos do jogo:
 ### Instalação do PyGame
 ```bash
 pip install pygame
+```
+## Caso o repositório já esteja clonado e você queira apenas atualizar:
+```bash
+git pull
+```
+
+## Em seguida, acesse a pasta do projeto:
+```bash
+cd Trabalho-01-CG
+```
+---
+
+## Pré-requisitos
+
+Certifique-se de que os seguintes itens estejam instalados:
+
+Python 3.x
+
+Gerenciador de pacotes pip
+
+Para verificar a versão do Python:
+```bash
+python --version
+```
+ou
+```bash
+python3 --version
+```
+
+---
+
+## Instalação das Dependências
+
+O projeto utiliza a biblioteca PyGame.
+
+Instale com:
+```bash
+pip install pygame
+```
+Caso esteja utilizando Linux ou MacOS:
+```bash
+pip3 install pygame
+```
+---
+
+## 4. Execução do Jogo
+
+Após a instalação das dependências, execute:
+```bash
+python main.py
+```
+ou
+```bash
+python3 main.py
+```
+
+Ao executar o comando, a janela do jogo será aberta e o jogador poderá interagir utilizando o teclado.
+
+---
+
+## Controles
+
+Setas do teclado: movimentação do morcego
+
+Tecla definida no jogo: emissão do eco
+
+---
+
+## Observações Finais
+
+Este projeto foi desenvolvido com fins acadêmicos para a disciplina de Computação Gráfica, respeitando as restrições propostas, com foco na aplicação de conceitos fundamentais, organização do código e criatividade no design do jogo.
