@@ -1,40 +1,43 @@
 import pygame
 import random
+from Primitivas import Circulo, FloodFill, ScanlineFill, SetPixel
 
 
 def gerar_textura_pedra(largura=64, altura=64):
-    """Gera textura procedural de pedra (caverna)"""
     textura = pygame.Surface((largura, altura))
-    textura.fill((40, 40, 50))  # Base cinza azulado
-
-    # Ruído
     for y in range(altura):
         for x in range(largura):
             var = random.randint(-15, 15)
             r = max(0, min(255, 40 + var))
             g = max(0, min(255, 40 + var))
             b = max(0, min(255, 50 + var))
-            textura.set_at((x, y), (r, g, b))
+            SetPixel.setPixel(textura, x, y, (r, g, b))
 
-    # Detalhes (manchas)
     for _ in range(40):
-        px = random.randint(0, largura - 1)
-        py = random.randint(0, altura - 1)
+        px = random.randint(2, largura - 3) 
+        py = random.randint(2, altura - 3)
         cor = (20, 20, 30) if random.random() > 0.5 else (70, 70, 80)
-        pygame.draw.circle(textura, cor, (px, py), random.randint(1, 3))
-    return textura
+        raio = random.randint(1, 3)
+        Circulo.Circulo(textura, px, py, raio, cor)
+        FloodFill.flood_fill_iterativo(textura, px, py, cor, cor)
 
+    return textura
 
 def gerar_textura_objetivo(largura=64, altura=64):
-
     textura = pygame.Surface((largura, altura))
-    textura.fill((20, 0, 50))
+    cor_fundo = (20, 0, 50)
+    pontos_fundo = [(0, 0), (largura-1, 0), (largura-1, altura-1), (0, altura-1)]
+    ScanlineFill.scanline_fill(textura, pontos_fundo, cor_fundo)
     centro = largura // 2
     for r in range(centro, 0, -2):
+        px = random.randint(5, largura - 5)
+        py = random.randint(5, altura - 5)
         cor = (min(255, 20 + r * 3), 0, min(255, 50 + r * 4))
-        pygame.draw.circle(textura, cor, (centro, centro), r, 1)
+        raio = random.randint(1, 3)
+        Circulo.Circulo(textura, px, py, raio, cor)
+        FloodFill.flood_fill_iterativo(textura, px, py, cor, cor)
+        
     return textura
-
 
 def gerar_chao_procedural(largura_tela, altura_tela, quantidade=4000):
 

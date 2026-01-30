@@ -218,10 +218,15 @@ class JogoVampiro:
                 if maior_onda - alcance_luz_chao < dist < maior_onda:
                     SetPixel.setPixel(self.tela, px, py, cor)
 
-        pygame.draw.rect(self.tela, COR_INTERFACE_BG, (10, 10, 200, 20))
-        pygame.draw.rect(
-            self.tela, COR_INTERFACE_MANA, (10, 10, int(self.mana * 2), 20)
-        )
+        pontos_bg = [(10, 10), (210, 10), (210, 30), (10, 30)]
+        ScanlineFill.scanline_fill(self.tela, pontos_bg, COR_INTERFACE_BG)
+
+        largura_mana = int(self.mana * 2)
+        
+        if largura_mana > 0:
+            xf = 10 + largura_mana 
+            pontos_mana = [(10, 10), (xf, 10), (xf, 30), (10, 30)]
+            ScanlineFill.scanline_fill(self.tela, pontos_mana, COR_INTERFACE_MANA)
         texto_msg = self.fonte_ui.render(
             "Aperte ESPAÇO para ECHO", True, (200, 200, 200)
         )
