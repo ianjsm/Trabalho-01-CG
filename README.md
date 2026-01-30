@@ -58,25 +58,6 @@ cd Trabalho-01-CG
 ```
 ---
 
-## Pré-requisitos
-
-Certifique-se de que os seguintes itens estejam instalados:
-
-Python 3.x
-
-Gerenciador de pacotes pip
-
-Para verificar a versão do Python:
-```bash
-python --version
-```
-ou
-```bash
-python3 --version
-```
-
----
-
 ## Instalação das Dependências
 
 O projeto utiliza a biblioteca PyGame.
